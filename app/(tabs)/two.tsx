@@ -1,106 +1,183 @@
-
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppText } from '../../components/common/AppText';
 import { Card } from '../../components/common/Card';
 import { Colors, Spacing } from '../../constants/theme';
+import { DailyContent, getTodayVerse } from '../../services/content';
 import { StorageService } from '../../services/storage';
-
-const DAILY_VERSE_ID = 'psalm-46-10';
 
 export default function ReflectionScreen() {
     const [reflection, setReflection] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isPremium, setIsPremium] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [todayVerse, setTodayVerse] = useState<DailyContent | null>(null);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
-        StorageService.isPremium().then(setIsPremium);
+        const init = async () => {
+            try {
+                const verse = getTodayVerse();
+                setTodayVerse(verse);
+                const premium = await StorageService.isPremium();
+                setIsPremium(premium);
+            } catch (error) {
+                console.error('Error loading reflection:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        init();
     }, []);
 
     const handleSave = async () => {
-        if (!reflection.trim()) return;
+        if (!reflection.trim() || !todayVerse) return;
 
         setIsSaving(true);
         try {
             await StorageService.saveReflection({
-                verseId: DAILY_VERSE_ID,
+                verseId: todayVerse.id,
                 content: reflection,
                 date: new Date().toISOString(),
             });
-            alert('Reflection saved! 🙏');
+            setShowSuccess(true);
             setReflection('');
+            setTimeout(() => setShowSuccess(false), 3000);
         } catch (error) {
-            alert('Failed to save reflection.');
+            alert('Failed to save reflection. Please try again.');
         } finally {
             setIsSaving(false);
         }
     };
 
+    if (loading || !todayVerse) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <AppText variant="h2">Reflection</AppText>
-                </View>
-
-                <Card style={styles.contentCard} padding="lg">
-                    <View style={styles.illustrationPlaceholder}>
-                        {/* This would be a beautiful illustration in the real app */}
-                        <View style={styles.mockIllustration} />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <AppText variant="caption" color={Colors.textSecondary}>{todayVerse.reference}</AppText>
+                        <AppText variant="h2">Understanding Today's Verse</AppText>
                     </View>
 
-                    <AppText variant="h2" style={styles.title}>Plain English Explanation</AppText>
-                    <AppText variant="body" style={styles.explanation}>
-                        This verse means that even when life feels chaotic or overwhelming, God is still in control. We are invited to let go of our anxiety and trust in His power and presence.
-                    </AppText>
+                    {/* Scripture Reminder */}
+                    <Card padding="lg" style={styles.verseReminder}>
+                        <AppText variant="body" style={styles.verseText} align="center">
+                            {todayVerse.text}
+                        </AppText>
+                    </Card>
 
+                    {/* Plain English Explanation */}
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Ionicons name="book-outline" size={20} color={Colors.primary} />
+                            <AppText variant="h2" style={styles.sectionTitle}>In Plain English</AppText>
+                        </View>
+                        <AppText variant="body" style={styles.explanationText}>
+                            {todayVerse.plainExplanation}
+                        </AppText>
+                    </View>
+
+                    {/* AI Insight (Premium) */}
                     {isPremium ? (
-                        <View style={styles.aiSection}>
+                        <Card padding="lg" style={styles.aiCard}>
                             <View style={styles.aiHeader}>
                                 <Ionicons name="sparkles" size={20} color={Colors.accent} />
-                                <AppText variant="h2" color={Colors.accent} style={{ marginLeft: 8 }}>AI Insight</AppText>
+                                <AppText variant="body" color={Colors.accent} style={styles.aiTitle}>
+                                    Deeper Insight
+                                </AppText>
                             </View>
-                            <AppText variant="body" style={styles.aiContent}>
-                                In the original Hebrew context, the phrase 'be still' (raphah) actually means to 'let go' or 'release.' It's a call to drop your weapons and stop fighting a battle that God has already won.
+                            <AppText variant="body" style={styles.aiText}>
+                                {todayVerse.aiInsight}
                             </AppText>
-                        </View>
+                        </Card>
                     ) : (
-                        <View style={styles.lockedSection}>
-                            <Ionicons name="lock-closed" size={24} color={Colors.textSecondary} />
-                            <AppText variant="body" color={Colors.textSecondary} style={{ marginTop: 8 }}>
-                                Unlock AI Insights with Premium
+                        <TouchableOpacity style={styles.lockedCard}>
+                            <View style={styles.lockedContent}>
+                                <Ionicons name="lock-closed" size={24} color={Colors.textSecondary} />
+                                <View style={{ marginLeft: Spacing.md, flex: 1 }}>
+                                    <AppText variant="body" style={{ fontWeight: '600' }}>Deeper Insight</AppText>
+                                    <AppText variant="caption" color={Colors.textSecondary}>
+                                        Unlock historical context and original language insights with Premium
+                                    </AppText>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+                            </View>
+                        </TouchableOpacity>
+                    )}
+
+                    {/* Reflection Question */}
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Ionicons name="help-circle-outline" size={20} color={Colors.primary} />
+                            <AppText variant="h2" style={styles.sectionTitle}>Reflect</AppText>
+                        </View>
+                        <AppText variant="body" style={styles.questionText}>
+                            {todayVerse.reflectionQuestion}
+                        </AppText>
+                    </View>
+
+                    {/* Reflection Input */}
+                    <View style={styles.inputSection}>
+                        <AppText variant="caption" color={Colors.textSecondary} style={{ marginBottom: Spacing.sm }}>
+                            Your thoughts (private)
+                        </AppText>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Write what's on your heart..."
+                            placeholderTextColor={Colors.textSecondary}
+                            multiline
+                            value={reflection}
+                            onChangeText={setReflection}
+                            textAlignVertical="top"
+                        />
+                    </View>
+
+                    {/* Success Message */}
+                    {showSuccess && (
+                        <View style={styles.successMessage}>
+                            <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                            <AppText variant="body" color="#4CAF50" style={{ marginLeft: 8 }}>
+                                Reflection saved!
                             </AppText>
                         </View>
                     )}
 
-                    <View style={styles.divider} />
-
-                    <AppText variant="h2" style={styles.title}>Your Thought</AppText>
-                    <AppText variant="body" color={Colors.textSecondary} style={styles.question}>
-                        What is one thing today that you need to 'be still' about and hand over to God?
-                    </AppText>
-
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Write your thoughts..."
-                        placeholderTextColor={Colors.textSecondary}
-                        multiline
-                        value={reflection}
-                        onChangeText={setReflection}
-                    />
-                </Card>
-
-                <TouchableOpacity
-                    style={[styles.saveButton, isSaving && { opacity: 0.5 }]}
-                    onPress={handleSave}
-                    disabled={isSaving}
-                >
-                    <AppText variant="body" color="#FFF" align="center">
-                        {isSaving ? 'Saving...' : 'Save Reflection'}
-                    </AppText>
-                </TouchableOpacity>
-            </ScrollView>
+                    {/* Save Button */}
+                    <TouchableOpacity
+                        style={[styles.saveButton, (!reflection.trim() || isSaving) && styles.buttonDisabled]}
+                        onPress={handleSave}
+                        disabled={!reflection.trim() || isSaving}
+                    >
+                        {isSaving ? (
+                            <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                            <>
+                                <Ionicons name="bookmark-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                                <AppText variant="body" color="#FFF">Save Reflection</AppText>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -110,81 +187,107 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
     },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     scrollContent: {
         padding: Spacing.lg,
+        paddingBottom: Spacing.xxl * 2,
     },
     header: {
         marginBottom: Spacing.lg,
         marginTop: Spacing.md,
     },
-    contentCard: {
-        paddingBottom: Spacing.xl,
-    },
-    illustrationPlaceholder: {
-        height: 180,
-        backgroundColor: Colors.secondary,
-        borderRadius: 12,
-        marginBottom: Spacing.xl,
-        overflow: 'hidden',
-    },
-    mockIllustration: {
-        flex: 1,
-        backgroundColor: '#A8B6A9', // Slightly darker sage for the 'illustration'
-    },
-    title: {
-        marginBottom: Spacing.md,
-    },
-    explanation: {
-        lineHeight: 24,
+    verseReminder: {
+        backgroundColor: '#F8F6F3',
         marginBottom: Spacing.xl,
     },
-    divider: {
-        height: 1,
-        backgroundColor: '#EEE',
-        marginVertical: Spacing.xl,
-    },
-    question: {
+    verseText: {
         fontStyle: 'italic',
-        marginBottom: Spacing.lg,
-    },
-    input: {
-        backgroundColor: '#F3F4F1',
-        borderRadius: 12,
-        padding: Spacing.md,
-        minHeight: 120,
-        textAlignVertical: 'top',
-        fontSize: 16,
+        lineHeight: 24,
         color: Colors.text,
     },
-    saveButton: {
-        backgroundColor: Colors.primary,
-        borderRadius: 30,
-        paddingVertical: Spacing.md,
-        marginTop: Spacing.xl,
-        marginBottom: Spacing.xxl,
+    section: {
+        marginBottom: Spacing.xl,
     },
-    aiSection: {
-        backgroundColor: '#FAF5EE',
-        padding: Spacing.md,
-        borderRadius: 12,
-        marginTop: Spacing.md,
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: Spacing.md,
+    },
+    sectionTitle: {
+        marginLeft: Spacing.sm,
+        fontSize: 18,
+    },
+    explanationText: {
+        lineHeight: 26,
+        color: Colors.text,
+    },
+    aiCard: {
+        backgroundColor: '#FDF8F3',
         borderWidth: 1,
-        borderColor: '#F3E5D5',
+        borderColor: '#F0E5D8',
+        marginBottom: Spacing.xl,
     },
     aiHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: Spacing.sm,
     },
-    aiContent: {
-        fontStyle: 'italic',
-        lineHeight: 22,
+    aiTitle: {
+        marginLeft: 8,
+        fontWeight: '600',
     },
-    lockedSection: {
-        alignItems: 'center',
+    aiText: {
+        lineHeight: 24,
+        fontStyle: 'italic',
+    },
+    lockedCard: {
+        backgroundColor: '#F5F5F5',
+        borderRadius: 16,
         padding: Spacing.lg,
-        backgroundColor: '#F3F4F1',
-        borderRadius: 12,
-        marginTop: Spacing.md,
+        marginBottom: Spacing.xl,
+    },
+    lockedContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    questionText: {
+        lineHeight: 26,
+        fontWeight: '500',
+        color: Colors.text,
+    },
+    inputSection: {
+        marginBottom: Spacing.lg,
+    },
+    input: {
+        backgroundColor: '#F8F8F6',
+        borderRadius: 16,
+        padding: Spacing.lg,
+        minHeight: 140,
+        fontSize: 16,
+        lineHeight: 24,
+        color: Colors.text,
+        borderWidth: 1,
+        borderColor: '#E8E8E6',
+    },
+    successMessage: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: Spacing.md,
+    },
+    saveButton: {
+        backgroundColor: Colors.primary,
+        borderRadius: 30,
+        paddingVertical: Spacing.md,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    buttonDisabled: {
+        opacity: 0.5,
     },
 });
