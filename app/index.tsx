@@ -1,18 +1,16 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
-import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
 import { AppText } from '../components/common/AppText';
 import { Colors } from '../constants/theme';
 
-const { width } = Dimensions.get('window');
-
 export default function SplashScreen() {
     const router = useRouter();
-    const logoScale = new Animated.Value(0);
-    const logoOpacity = new Animated.Value(0);
-    const textOpacity = new Animated.Value(0);
+    const logoScale = useRef(new Animated.Value(0)).current;
+    const logoOpacity = useRef(new Animated.Value(0)).current;
+    const textOpacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         Animated.sequence([
@@ -37,9 +35,9 @@ export default function SplashScreen() {
         ]).start(() => {
             setTimeout(() => {
                 router.replace('/onboarding');
-            }, 1500);
+            }, 1000);
         });
-    }, []);
+    }, [router, logoScale, logoOpacity, textOpacity]);
 
     return (
         <View style={styles.container}>

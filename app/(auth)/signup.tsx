@@ -16,15 +16,27 @@ export default function SignUpScreen() {
     const router = useRouter();
 
     const handleSignUp = async () => {
-        if (!email || !password || !name) return;
+        if (!email || !password || !name) {
+            alert('Please fill in all fields.');
+            return;
+        }
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters.');
+            return;
+        }
         setLoading(true);
-        const { error } = await AuthService.signUp(email, password);
-        setLoading(false);
-        if (error) {
-            alert(error.message);
-        } else {
-            alert('Account created! Please check your email for verification.');
-            router.replace('/(auth)/login');
+        try {
+            const { error } = await AuthService.signUp(email, password);
+            if (error) {
+                alert(error.message);
+            } else {
+                alert('Account created! Please check your email for verification.');
+                router.replace('/login');
+            }
+        } catch (err) {
+            alert('An unexpected error occurred. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -50,6 +62,7 @@ export default function SignUpScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="John Doe"
+                                placeholderTextColor={Colors.textSecondary}
                                 value={name}
                                 onChangeText={setName}
                             />
@@ -60,6 +73,7 @@ export default function SignUpScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="email@example.com"
+                                placeholderTextColor={Colors.textSecondary}
                                 value={email}
                                 onChangeText={setEmail}
                                 autoCapitalize="none"
@@ -71,7 +85,8 @@ export default function SignUpScreen() {
                             <AppText variant="caption" color={Colors.textSecondary} style={styles.label}>Password</AppText>
                             <TextInput
                                 style={styles.input}
-                                placeholder="min. 8 characters"
+                                placeholder="min. 6 characters"
+                                placeholderTextColor={Colors.textSecondary}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
@@ -79,7 +94,7 @@ export default function SignUpScreen() {
                         </View>
 
                         <TouchableOpacity
-                            style={[styles.button, { backgroundColor: Colors.primary }]}
+                            style={[styles.button, { backgroundColor: Colors.primary }, loading && { opacity: 0.6 }]}
                             onPress={handleSignUp}
                             disabled={loading}
                         >
@@ -89,7 +104,7 @@ export default function SignUpScreen() {
 
                     <View style={styles.footer}>
                         <AppText variant="body" color={Colors.textSecondary}>Already joined? </AppText>
-                        <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                        <TouchableOpacity onPress={() => router.push('/login')}>
                             <AppText variant="body" color={Colors.primary} style={{ fontWeight: 'bold' }}>Sign In</AppText>
                         </TouchableOpacity>
                     </View>

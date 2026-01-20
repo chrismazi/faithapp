@@ -13,21 +13,35 @@ export default function ProfileScreen() {
     const [password, setPassword] = useState('');
     const [streak, setStreak] = useState(0);
     const [isPremium, setIsPremium] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        AuthService.getSession().then(({ data: { session } }) => {
-            setSession(session);
-        });
+        let unsubscribe: (() => void) | undefined;
 
-        const { data: authListener } = AuthService.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
+        const init = async () => {
+            try {
+                const { data } = await AuthService.getSession();
+                setSession(data?.session || null);
 
-        StorageService.getStreak().then(setStreak);
-        StorageService.isPremium().then(setIsPremium);
+                const listener = AuthService.onAuthStateChange((_event, session) => {
+                    setSession(session);
+                });
+                unsubscribe = () => listener.data?.subscription?.unsubscribe();
+
+                const currentStreak = await StorageService.getStreak();
+                setStreak(currentStreak);
+
+                const premium = await StorageService.isPremium();
+                setIsPremium(premium);
+            } catch (error) {
+                console.error('Profile init error:', error);
+            }
+        };
+
+        init();
 
         return () => {
-            authListener.subscription.unsubscribe();
+            if (unsubscribe) unsubscribe();
         };
     }, []);
 
@@ -38,13 +52,29 @@ export default function ProfileScreen() {
     };
 
     const handleAuth = async (type: 'signIn' | 'signUp') => {
-        const { error } = await AuthService[type](email, password);
-        if (error) alert(error.message);
+        if (!email || !password) {
+            alert('Please enter email and password.');
+            return;
+        }
+        setLoading(true);
+        try {
+            const { error } = await AuthService[type](email, password);
+            if (error) alert(error.message);
+        } catch (err) {
+            alert('An error occurred. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSignOut = async () => {
-        const { error } = await AuthService.signOut();
-        if (error) alert(error.message);
+        try {
+            const { error } = await AuthService.signOut();
+            if (error) alert(error.message);
+            else setSession(null);
+        } catch (err) {
+            alert('Error signing out.');
+        }
     };
 
     if (session) {
@@ -61,7 +91,7 @@ export default function ProfileScreen() {
                                 </View>
                             )}
                         </View>
-                        <AppText variant="h2">{session.user.email}</AppText>
+                        <AppText variant="h2">{session.user?.email || 'User'}</AppText>
                         <View style={styles.divider} />
                         <AppText variant="body" color={Colors.textSecondary}>Current Streak</AppText>
                         <AppText variant="h1" color={Colors.primary}>{streak} Days</AppText>
@@ -74,7 +104,7 @@ export default function ProfileScreen() {
                                 Unlock AI-powered explanations, full study plans, and unlimited history.
                             </AppText>
                             <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
-                                <AppText variant="body" color={Colors.accent} align="center">Update for $4.99/mo</AppText>
+                                <AppText variant="body" color={Colors.accent} align="center">Upgrade for $4.99/mo</AppText>
                             </TouchableOpacity>
                         </Card>
                     )}
@@ -99,28 +129,33 @@ export default function ProfileScreen() {
                     <TextInput
                         style={styles.input}
                         placeholder="Email"
+                        placeholderTextColor={Colors.textSecondary}
                         value={email}
                         onChangeText={setEmail}
                         autoCapitalize="none"
+                        keyboardType="email-address"
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Password"
+                        placeholderTextColor={Colors.textSecondary}
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
                     />
 
                     <TouchableOpacity
-                        style={[styles.button, { backgroundColor: Colors.primary }]}
+                        style={[styles.button, { backgroundColor: Colors.primary }, loading && { opacity: 0.6 }]}
                         onPress={() => handleAuth('signIn')}
+                        disabled={loading}
                     >
-                        <AppText color="#FFF" align="center">Sign In</AppText>
+                        <AppText color="#FFF" align="center">{loading ? 'Please wait...' : 'Sign In'}</AppText>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[styles.button, styles.secondaryButton]}
                         onPress={() => handleAuth('signUp')}
+                        disabled={loading}
                     >
                         <AppText align="center">Create Account</AppText>
                     </TouchableOpacity>
@@ -157,6 +192,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: Spacing.md,
         fontSize: 16,
+        color: Colors.text,
     },
     button: {
         borderRadius: 30,

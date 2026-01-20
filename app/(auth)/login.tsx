@@ -15,14 +15,22 @@ export default function LoginScreen() {
     const router = useRouter();
 
     const handleLogin = async () => {
-        if (!email || !password) return;
+        if (!email || !password) {
+            alert('Please enter both email and password.');
+            return;
+        }
         setLoading(true);
-        const { error } = await AuthService.signIn(email, password);
-        setLoading(false);
-        if (error) {
-            alert(error.message);
-        } else {
-            router.replace('/(tabs)');
+        try {
+            const { error } = await AuthService.signIn(email, password);
+            if (error) {
+                alert(error.message);
+            } else {
+                router.replace('/(tabs)');
+            }
+        } catch (err) {
+            alert('An unexpected error occurred. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -48,6 +56,7 @@ export default function LoginScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="email@example.com"
+                                placeholderTextColor={Colors.textSecondary}
                                 value={email}
                                 onChangeText={setEmail}
                                 autoCapitalize="none"
@@ -60,6 +69,7 @@ export default function LoginScreen() {
                             <TextInput
                                 style={styles.input}
                                 placeholder="********"
+                                placeholderTextColor={Colors.textSecondary}
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
@@ -71,7 +81,7 @@ export default function LoginScreen() {
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.button, { backgroundColor: Colors.primary }]}
+                            style={[styles.button, { backgroundColor: Colors.primary }, loading && { opacity: 0.6 }]}
                             onPress={handleLogin}
                             disabled={loading}
                         >
@@ -81,7 +91,7 @@ export default function LoginScreen() {
 
                     <View style={styles.footer}>
                         <AppText variant="body" color={Colors.textSecondary}>Don't have an account? </AppText>
-                        <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+                        <TouchableOpacity onPress={() => router.push('/signup')}>
                             <AppText variant="body" color={Colors.primary} style={{ fontWeight: 'bold' }}>Sign Up</AppText>
                         </TouchableOpacity>
                     </View>

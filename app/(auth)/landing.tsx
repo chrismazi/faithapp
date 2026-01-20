@@ -27,14 +27,14 @@ export default function AuthLandingScreen() {
 
                     <TouchableOpacity
                         style={[styles.button, { backgroundColor: Colors.primary }]}
-                        onPress={() => router.push('/(auth)/signup')}
+                        onPress={() => router.push('/signup')}
                     >
                         <AppText color="#FFF" align="center">Create Account</AppText>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={[styles.button, styles.secondaryButton]}
-                        onPress={() => router.push('/(auth)/login')}
+                        onPress={() => router.push('/login')}
                     >
                         <AppText align="center">Sign In</AppText>
                     </TouchableOpacity>
