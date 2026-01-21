@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
@@ -11,28 +10,28 @@ const { width, height } = Dimensions.get('window');
 interface SlideItem {
     id: string;
     title: string;
-    description: string;
+    subtitle: string;
     icon: keyof typeof Ionicons.glyphMap;
 }
 
 const SLIDES: SlideItem[] = [
     {
         id: '1',
-        title: 'Understand the Bible',
-        description: 'We translate complex scripture into simple, plain English that anyone can understand.',
+        title: 'Understand',
+        subtitle: 'Scripture in plain English that makes sense.',
         icon: 'book-outline',
     },
     {
         id: '2',
-        title: 'Apply Daily',
-        description: 'Get practical reflection questions and AI insights to help you live out the Word.',
+        title: 'Apply',
+        subtitle: 'Daily reflection questions for real life.',
         icon: 'bulb-outline',
     },
     {
         id: '3',
-        title: 'Grow Together',
-        description: 'Join a community of young adults dedicated to consistent spiritual growth.',
-        icon: 'people-outline',
+        title: 'Grow',
+        subtitle: 'Build consistency with gentle streaks.',
+        icon: 'trending-up-outline',
     },
 ];
 
@@ -50,7 +49,7 @@ export default function OnboardingScreen() {
 
     const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
-    const scrollTo = () => {
+    const handleNext = () => {
         if (currentIndex < SLIDES.length - 1 && slidesRef.current) {
             slidesRef.current.scrollToIndex({ index: currentIndex + 1 });
         } else {
@@ -60,21 +59,19 @@ export default function OnboardingScreen() {
 
     const Slide = ({ item }: { item: SlideItem }) => (
         <View style={styles.slide}>
-            <View style={styles.iconContainer}>
-                <Ionicons name={item.icon} size={120} color={Colors.primary} />
+            <View style={styles.iconCircle}>
+                <Ionicons name={item.icon} size={48} color={Colors.primary} />
             </View>
-            <View style={styles.textContainer}>
-                <AppText variant="h1" align="center" style={styles.title}>{item.title}</AppText>
-                <AppText variant="body" align="center" color={Colors.textSecondary} style={styles.description}>
-                    {item.description}
-                </AppText>
-            </View>
+            <AppText variant="h1" align="center" style={styles.slideTitle}>{item.title}</AppText>
+            <AppText variant="body" align="center" color={Colors.textSecondary}>
+                {item.subtitle}
+            </AppText>
         </View>
     );
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={{ flex: 3 }}>
+            <View style={styles.slideContainer}>
                 <FlatList
                     data={SLIDES}
                     renderItem={({ item }) => <Slide item={item} />}
@@ -92,35 +89,34 @@ export default function OnboardingScreen() {
                 />
             </View>
 
-            <View style={styles.footer}>
-                <View style={styles.indicatorContainer}>
-                    {SLIDES.map((_, i) => {
-                        const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
-                        const dotWidth = scrollX.interpolate({
-                            inputRange,
-                            outputRange: [10, 20, 10],
-                            extrapolate: 'clamp',
-                        });
-                        const opacity = scrollX.interpolate({
-                            inputRange,
-                            outputRange: [0.3, 1, 0.3],
-                            extrapolate: 'clamp',
-                        });
-                        return <Animated.View style={[styles.dot, { width: dotWidth, opacity }]} key={i.toString()} />;
-                    })}
-                </View>
+            {/* Dots */}
+            <View style={styles.dotsRow}>
+                {SLIDES.map((_, i) => {
+                    const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
+                    const dotWidth = scrollX.interpolate({
+                        inputRange,
+                        outputRange: [8, 20, 8],
+                        extrapolate: 'clamp',
+                    });
+                    const opacity = scrollX.interpolate({
+                        inputRange,
+                        outputRange: [0.3, 1, 0.3],
+                        extrapolate: 'clamp',
+                    });
+                    return <Animated.View style={[styles.dot, { width: dotWidth, opacity }]} key={i.toString()} />;
+                })}
+            </View>
 
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: Colors.primary }]}
-                    onPress={scrollTo}
-                >
-                    <AppText color="#FFF" align="center">
+            {/* Buttons */}
+            <View style={styles.footer}>
+                <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.8}>
+                    <AppText variant="body" color="#FFF" style={{ fontWeight: '600' }}>
                         {currentIndex === SLIDES.length - 1 ? 'Get Started' : 'Next'}
                     </AppText>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.skipButton} onPress={() => router.replace('/(tabs)')}>
-                    <AppText align="center" color={Colors.textSecondary}>Skip</AppText>
+                <TouchableOpacity style={styles.skipBtn} onPress={() => router.replace('/(tabs)')}>
+                    <AppText variant="caption" color={Colors.textSecondary}>Skip</AppText>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -132,50 +128,53 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
     },
+    slideContainer: {
+        flex: 1,
+        justifyContent: 'center',
+    },
     slide: {
         width,
-        justifyContent: 'center',
         alignItems: 'center',
-        padding: Spacing.xl,
-    },
-    iconContainer: {
-        flex: 0.7,
         justifyContent: 'center',
-    },
-    textContainer: {
-        flex: 0.3,
-    },
-    title: {
-        marginBottom: Spacing.md,
-        color: Colors.primary,
-    },
-    description: {
-        lineHeight: 24,
-    },
-    footer: {
-        height: height * 0.2,
-        justifyContent: 'space-between',
         paddingHorizontal: Spacing.xl,
-        paddingBottom: Spacing.lg,
     },
-    indicatorContainer: {
-        flexDirection: 'row',
-        height: 40,
+    iconCircle: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#E8F0E8',
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
+    slideTitle: {
+        marginBottom: 8,
+    },
+    dotsRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 40,
     },
     dot: {
-        height: 10,
-        borderRadius: 5,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: Colors.primary,
-        marginHorizontal: 8,
+        marginHorizontal: 4,
     },
-    button: {
+    footer: {
+        paddingHorizontal: Spacing.xl,
+        paddingBottom: Spacing.xxl,
+    },
+    nextBtn: {
         backgroundColor: Colors.primary,
         paddingVertical: Spacing.md,
-        borderRadius: 30,
+        borderRadius: 24,
+        alignItems: 'center',
+        marginBottom: Spacing.md,
     },
-    skipButton: {
-        paddingVertical: Spacing.sm,
+    skipBtn: {
+        alignItems: 'center',
+        paddingVertical: 8,
     },
 });

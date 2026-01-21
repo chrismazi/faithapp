@@ -11,7 +11,7 @@ const { height } = Dimensions.get('window');
 interface PrayerStep {
     title: string;
     content: string;
-    duration: number; // seconds
+    icon: keyof typeof Ionicons.glyphMap;
 }
 
 export default function PrayerScreen() {
@@ -20,33 +20,32 @@ export default function PrayerScreen() {
     const [currentStep, setCurrentStep] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const progressAnim = useRef(new Animated.Value(0)).current;
 
     const prayerSteps: PrayerStep[] = todayVerse ? [
         {
-            title: 'Center Yourself',
-            content: 'Take a deep breath. Close your eyes if you\'d like. Let go of distractions and become present with God.',
-            duration: 10,
+            title: 'Breathe',
+            content: 'Take a slow, deep breath. Let go of distractions. Become present.',
+            icon: 'ellipse-outline',
         },
         {
-            title: 'Scripture Focus',
+            title: 'Read',
             content: todayVerse.text,
-            duration: 15,
+            icon: 'book-outline',
         },
         {
-            title: 'Guided Prayer',
+            title: 'Pray',
             content: todayVerse.prayerPrompt,
-            duration: 20,
+            icon: 'heart-outline',
         },
         {
             title: 'Listen',
-            content: 'Sit quietly for a moment. Is there anything God might be saying to you through this verse today?',
-            duration: 15,
+            content: 'Sit quietly. Is God speaking anything to you through this verse?',
+            icon: 'ear-outline',
         },
         {
             title: 'Respond',
-            content: 'Speak to God in your own words. Share what\'s on your heart. He\'s listening.',
-            duration: 20,
+            content: 'Speak to God in your own words. He\'s listening.',
+            icon: 'chatbubble-outline',
         },
     ] : [];
 
@@ -57,37 +56,24 @@ export default function PrayerScreen() {
 
     useEffect(() => {
         if (prayerSteps.length === 0) return;
-
-        // Fade in animation
+        fadeAnim.setValue(0);
         Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 800,
+            duration: 600,
             useNativeDriver: true,
         }).start();
-
-        // Progress animation
-        const currentDuration = prayerSteps[currentStep]?.duration || 10;
-        progressAnim.setValue(0);
-        Animated.timing(progressAnim, {
-            toValue: 1,
-            duration: currentDuration * 1000,
-            useNativeDriver: false,
-        }).start();
-
     }, [currentStep, prayerSteps.length]);
 
     const handleNext = () => {
         if (currentStep < prayerSteps.length - 1) {
-            fadeAnim.setValue(0);
             setCurrentStep(currentStep + 1);
         } else {
             setIsComplete(true);
         }
     };
 
-    const handlePrevious = () => {
+    const handlePrev = () => {
         if (currentStep > 0) {
-            fadeAnim.setValue(0);
             setCurrentStep(currentStep - 1);
         }
     };
@@ -107,96 +93,78 @@ export default function PrayerScreen() {
             <SafeAreaView style={styles.container}>
                 <View style={styles.completeContainer}>
                     <View style={styles.completeIcon}>
-                        <Ionicons name="checkmark-circle" size={80} color={Colors.primary} />
+                        <Ionicons name="checkmark-circle" size={64} color={Colors.primary} />
                     </View>
-                    <AppText variant="h1" align="center" style={styles.completeTitle}>
-                        Prayer Complete
-                    </AppText>
+                    <AppText variant="h1" align="center">Well Done</AppText>
                     <AppText variant="body" align="center" color={Colors.textSecondary} style={styles.completeText}>
-                        You've taken time to connect with God today. That matters more than you know.
+                        You took time to connect with God today.
                     </AppText>
-                    <TouchableOpacity
-                        style={styles.doneButton}
-                        onPress={() => router.back()}
-                    >
-                        <AppText variant="body" color="#FFF">Return Home</AppText>
+                    <TouchableOpacity style={styles.doneBtn} onPress={() => router.back()}>
+                        <AppText variant="body" color="#FFF">Done</AppText>
                     </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
     }
 
-    const currentPrayer = prayerSteps[currentStep];
+    const current = prayerSteps[currentStep];
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Close Button */}
-            <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
-                <Ionicons name="close" size={28} color={Colors.text} />
+            {/* Close */}
+            <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+                <Ionicons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
 
-            {/* Progress Indicator */}
-            <View style={styles.progressContainer}>
-                {prayerSteps.map((_, index) => (
+            {/* Progress */}
+            <View style={styles.progressRow}>
+                {prayerSteps.map((_, i) => (
                     <View
-                        key={index}
+                        key={i}
                         style={[
                             styles.progressDot,
-                            index === currentStep && styles.progressDotActive,
-                            index < currentStep && styles.progressDotComplete,
+                            i === currentStep && styles.progressActive,
+                            i < currentStep && styles.progressDone,
                         ]}
                     />
                 ))}
             </View>
 
-            {/* Main Content */}
+            {/* Content */}
             <View style={styles.content}>
-                <Animated.View style={[styles.prayerContent, { opacity: fadeAnim }]}>
+                <Animated.View style={[styles.stepContent, { opacity: fadeAnim }]}>
+                    <View style={styles.stepIcon}>
+                        <Ionicons name={current.icon} size={32} color={Colors.primary} />
+                    </View>
                     <AppText variant="caption" color={Colors.primary} style={styles.stepLabel}>
-                        Step {currentStep + 1} of {prayerSteps.length}
+                        Step {currentStep + 1}
                     </AppText>
-                    <AppText variant="h1" align="center" style={styles.prayerTitle}>
-                        {currentPrayer.title}
+                    <AppText variant="h1" align="center" style={styles.stepTitle}>
+                        {current.title}
                     </AppText>
-                    <AppText variant="body" align="center" style={styles.prayerText}>
-                        {currentPrayer.content}
+                    <AppText variant="body" align="center" style={styles.stepText}>
+                        {current.content}
                     </AppText>
                 </Animated.View>
             </View>
 
-            {/* Timer Bar */}
-            <View style={styles.timerContainer}>
-                <Animated.View
-                    style={[
-                        styles.timerBar,
-                        {
-                            width: progressAnim.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: ['0%', '100%'],
-                            }),
-                        }
-                    ]}
-                />
-            </View>
-
             {/* Navigation */}
-            <View style={styles.navigation}>
+            <View style={styles.navRow}>
                 <TouchableOpacity
-                    style={[styles.navButton, currentStep === 0 && styles.navButtonDisabled]}
-                    onPress={handlePrevious}
+                    style={[styles.navBtn, currentStep === 0 && styles.navDisabled]}
+                    onPress={handlePrev}
                     disabled={currentStep === 0}
                 >
-                    <Ionicons name="chevron-back" size={24} color={currentStep === 0 ? Colors.textSecondary : Colors.text} />
+                    <Ionicons name="chevron-back" size={20} color={currentStep === 0 ? '#CCC' : Colors.text} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-                    <AppText variant="body" color="#FFF">
+                <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
+                    <AppText variant="body" color="#FFF" style={{ fontWeight: '600' }}>
                         {currentStep === prayerSteps.length - 1 ? 'Finish' : 'Continue'}
                     </AppText>
-                    <Ionicons name="chevron-forward" size={20} color="#FFF" style={{ marginLeft: 4 }} />
                 </TouchableOpacity>
 
-                <View style={styles.navButton} />
+                <View style={styles.navBtn} />
             </View>
         </SafeAreaView>
     );
@@ -212,18 +180,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    closeButton: {
+    closeBtn: {
         position: 'absolute',
-        top: Spacing.xl + 20,
+        top: Spacing.xl + 16,
         right: Spacing.lg,
         zIndex: 10,
-        padding: Spacing.sm,
+        padding: 8,
     },
-    progressContainer: {
+    progressRow: {
         flexDirection: 'row',
         justifyContent: 'center',
-        paddingTop: Spacing.xl + 20,
-        gap: Spacing.sm,
+        paddingTop: Spacing.xl + 16,
+        gap: 8,
     },
     progressDot: {
         width: 8,
@@ -231,11 +199,11 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         backgroundColor: '#E0E0E0',
     },
-    progressDotActive: {
+    progressActive: {
         backgroundColor: Colors.primary,
-        width: 24,
+        width: 20,
     },
-    progressDotComplete: {
+    progressDone: {
         backgroundColor: Colors.primary,
     },
     content: {
@@ -243,61 +211,53 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingHorizontal: Spacing.xl,
     },
-    prayerContent: {
+    stepContent: {
         alignItems: 'center',
     },
+    stepIcon: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: '#E8F0E8',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: Spacing.lg,
+    },
     stepLabel: {
-        marginBottom: Spacing.md,
         textTransform: 'uppercase',
         letterSpacing: 2,
+        marginBottom: 8,
     },
-    prayerTitle: {
-        marginBottom: Spacing.xl,
-        color: Colors.text,
+    stepTitle: {
+        marginBottom: Spacing.md,
     },
-    prayerText: {
-        lineHeight: 28,
-        fontSize: 18,
-        color: Colors.text,
+    stepText: {
+        lineHeight: 24,
         paddingHorizontal: Spacing.md,
     },
-    timerContainer: {
-        height: 4,
-        backgroundColor: '#E8E8E8',
-        marginHorizontal: Spacing.xl,
-        borderRadius: 2,
-        overflow: 'hidden',
-    },
-    timerBar: {
-        height: '100%',
-        backgroundColor: Colors.primary,
-        borderRadius: 2,
-    },
-    navigation: {
+    navRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: Spacing.xl,
+        padding: Spacing.lg,
         paddingBottom: Spacing.xxl,
     },
-    navButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+    navBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: Colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    navButtonDisabled: {
-        opacity: 0.5,
+    navDisabled: {
+        opacity: 0.4,
     },
-    nextButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    nextBtn: {
         backgroundColor: Colors.primary,
         paddingHorizontal: Spacing.xl,
         paddingVertical: Spacing.md,
-        borderRadius: 30,
+        borderRadius: 24,
     },
     completeContainer: {
         flex: 1,
@@ -306,20 +266,16 @@ const styles = StyleSheet.create({
         padding: Spacing.xl,
     },
     completeIcon: {
-        marginBottom: Spacing.xl,
-    },
-    completeTitle: {
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.lg,
     },
     completeText: {
-        lineHeight: 24,
-        marginBottom: Spacing.xxl,
-        paddingHorizontal: Spacing.lg,
+        marginTop: 8,
+        marginBottom: Spacing.xl,
     },
-    doneButton: {
+    doneBtn: {
         backgroundColor: Colors.primary,
         paddingHorizontal: Spacing.xxl,
         paddingVertical: Spacing.md,
-        borderRadius: 30,
+        borderRadius: 24,
     },
 });

@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { AppText } from '../../components/common/AppText';
-import { Card } from '../../components/common/Card';
 import { Colors, Spacing } from '../../constants/theme';
 import { AuthService } from '../../services/auth';
 import { Reflection, StorageService, Verse } from '../../services/storage';
@@ -16,16 +15,14 @@ export default function ProfileScreen() {
     const [loading, setLoading] = useState(true);
     const [savedVerses, setSavedVerses] = useState<Verse[]>([]);
     const [reflections, setReflections] = useState<Reflection[]>([]);
-    const [activeTab, setActiveTab] = useState<'saved' | 'reflections'>('saved');
+    const [activeTab, setActiveTab] = useState<'saved' | 'journal'>('saved');
 
     useEffect(() => {
         let unsubscribe: (() => void) | undefined;
-
         const init = async () => {
             try {
                 const { data } = await AuthService.getSession();
                 setSession(data?.session || null);
-
                 const listener = AuthService.onAuthStateChange((_event, session) => {
                     setSession(session);
                 });
@@ -37,7 +34,6 @@ export default function ProfileScreen() {
                     StorageService.getSavedVerses(),
                     StorageService.getReflections(),
                 ]);
-
                 setStreak(currentStreak);
                 setIsPremium(premium);
                 setSavedVerses(verses);
@@ -48,7 +44,6 @@ export default function ProfileScreen() {
                 setLoading(false);
             }
         };
-
         init();
         return () => { if (unsubscribe) unsubscribe(); };
     }, []);
@@ -56,16 +51,11 @@ export default function ProfileScreen() {
     const handleUpgrade = async () => {
         await StorageService.setPremium(true);
         setIsPremium(true);
-        alert('Welcome to Faith App Premium! ✨');
     };
 
     const handleSignOut = async () => {
-        try {
-            await AuthService.signOut();
-            setSession(null);
-        } catch (err) {
-            alert('Error signing out.');
-        }
+        await AuthService.signOut();
+        setSession(null);
     };
 
     if (loading) {
@@ -83,145 +73,162 @@ export default function ProfileScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>
-                    <View style={styles.avatarContainer}>
-                        <Ionicons name="person" size={32} color={Colors.primary} />
+                    <View style={styles.avatar}>
+                        <AppText variant="h1" color={Colors.primary}>
+                            {(session?.user?.email?.[0] || 'G').toUpperCase()}
+                        </AppText>
                     </View>
                     <View style={styles.profileInfo}>
                         <View style={styles.nameRow}>
                             <AppText variant="h2">
-                                {session?.user?.email?.split('@')[0] || 'Guest User'}
+                                {session?.user?.email?.split('@')[0] || 'Guest'}
                             </AppText>
                             {isPremium && (
-                                <View style={styles.premiumBadge}>
-                                    <Ionicons name="star" size={12} color="#FFF" />
-                                    <AppText variant="caption" color="#FFF" style={{ marginLeft: 4 }}>PRO</AppText>
+                                <View style={styles.proBadge}>
+                                    <AppText variant="caption" color="#FFF" style={{ fontSize: 10 }}>PRO</AppText>
                                 </View>
                             )}
                         </View>
                         <AppText variant="caption" color={Colors.textSecondary}>
-                            {session?.user?.email || 'Sign in to sync your progress'}
+                            {session ? session.user?.email : 'Sign in to sync'}
                         </AppText>
                     </View>
                 </View>
 
-                {/* Stats Row */}
+                {/* Stats */}
                 <View style={styles.statsRow}>
-                    <View style={styles.statCard}>
-                        <Ionicons name="flame" size={24} color={Colors.accent} />
-                        <AppText variant="h1" style={styles.statNumber}>{streak}</AppText>
+                    <View style={styles.statItem}>
+                        <AppText variant="h1" style={styles.statNum}>{streak}</AppText>
                         <AppText variant="caption" color={Colors.textSecondary}>Day Streak</AppText>
                     </View>
-                    <View style={styles.statCard}>
-                        <Ionicons name="bookmark" size={24} color={Colors.primary} />
-                        <AppText variant="h1" style={styles.statNumber}>{savedVerses.length}</AppText>
-                        <AppText variant="caption" color={Colors.textSecondary}>Saved Verses</AppText>
+                    <View style={styles.statDivider} />
+                    <View style={styles.statItem}>
+                        <AppText variant="h1" style={styles.statNum}>{savedVerses.length}</AppText>
+                        <AppText variant="caption" color={Colors.textSecondary}>Saved</AppText>
                     </View>
-                    <View style={styles.statCard}>
-                        <Ionicons name="create" size={24} color="#8B9D83" />
-                        <AppText variant="h1" style={styles.statNumber}>{reflections.length}</AppText>
+                    <View style={styles.statDivider} />
+                    <View style={styles.statItem}>
+                        <AppText variant="h1" style={styles.statNum}>{reflections.length}</AppText>
                         <AppText variant="caption" color={Colors.textSecondary}>Reflections</AppText>
                     </View>
                 </View>
 
-                {/* Premium Upsell */}
+                {/* Premium CTA */}
                 {!isPremium && (
-                    <TouchableOpacity style={styles.upgradeCard} onPress={handleUpgrade}>
-                        <View style={styles.upgradeContent}>
-                            <View>
-                                <AppText variant="h2" color="#FFF">Unlock Premium</AppText>
-                                <AppText variant="body" color="#FFF" style={styles.upgradeText}>
-                                    Get AI insights, study plans & more
+                    <TouchableOpacity style={styles.premiumCard} onPress={handleUpgrade} activeOpacity={0.9}>
+                        <View style={styles.premiumContent}>
+                            <Ionicons name="sparkles" size={20} color="#FFF" />
+                            <View style={styles.premiumText}>
+                                <AppText variant="body" color="#FFF" style={{ fontWeight: '600' }}>
+                                    Upgrade to Premium
+                                </AppText>
+                                <AppText variant="caption" color="#FFF" style={{ opacity: 0.85 }}>
+                                    AI insights, study plans & more
                                 </AppText>
                             </View>
-                            <View style={styles.upgradeButton}>
-                                <AppText variant="caption" color={Colors.primary}>Try Free</AppText>
-                            </View>
+                        </View>
+                        <View style={styles.premiumBtn}>
+                            <AppText variant="caption" color={Colors.primary} style={{ fontWeight: '600' }}>
+                                Try Free
+                            </AppText>
                         </View>
                     </TouchableOpacity>
                 )}
 
-                {/* Content Tabs */}
-                <View style={styles.tabContainer}>
+                {/* Tabs */}
+                <View style={styles.tabs}>
                     <TouchableOpacity
                         style={[styles.tab, activeTab === 'saved' && styles.tabActive]}
                         onPress={() => setActiveTab('saved')}
                     >
-                        <AppText
-                            variant="body"
+                        <Ionicons
+                            name="bookmark-outline"
+                            size={16}
                             color={activeTab === 'saved' ? Colors.primary : Colors.textSecondary}
+                        />
+                        <AppText
+                            variant="caption"
+                            color={activeTab === 'saved' ? Colors.primary : Colors.textSecondary}
+                            style={{ marginLeft: 6 }}
                         >
-                            Saved Verses
+                            Saved
                         </AppText>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[styles.tab, activeTab === 'reflections' && styles.tabActive]}
-                        onPress={() => setActiveTab('reflections')}
+                        style={[styles.tab, activeTab === 'journal' && styles.tabActive]}
+                        onPress={() => setActiveTab('journal')}
                     >
+                        <Ionicons
+                            name="create-outline"
+                            size={16}
+                            color={activeTab === 'journal' ? Colors.primary : Colors.textSecondary}
+                        />
                         <AppText
-                            variant="body"
-                            color={activeTab === 'reflections' ? Colors.primary : Colors.textSecondary}
+                            variant="caption"
+                            color={activeTab === 'journal' ? Colors.primary : Colors.textSecondary}
+                            style={{ marginLeft: 6 }}
                         >
-                            My Reflections
+                            Journal
                         </AppText>
                     </TouchableOpacity>
                 </View>
 
-                {/* Content List */}
+                {/* Content */}
                 {activeTab === 'saved' ? (
                     savedVerses.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <Ionicons name="bookmark-outline" size={48} color={Colors.textSecondary} />
-                            <AppText variant="body" color={Colors.textSecondary} align="center" style={{ marginTop: Spacing.md }}>
-                                No saved verses yet.{'\n'}Tap the bookmark icon on any verse to save it.
+                            <Ionicons name="bookmark-outline" size={36} color={Colors.textSecondary} />
+                            <AppText variant="body" color={Colors.textSecondary} align="center" style={{ marginTop: 12 }}>
+                                No saved verses yet
                             </AppText>
                         </View>
                     ) : (
-                        savedVerses.map((verse, index) => (
-                            <Card key={verse.id} padding="lg" style={styles.contentCard}>
+                        savedVerses.map((verse) => (
+                            <View key={verse.id} style={styles.listItem}>
                                 <AppText variant="caption" color={Colors.primary}>{verse.reference}</AppText>
-                                <AppText variant="body" style={styles.verseText} numberOfLines={3}>
+                                <AppText variant="body" numberOfLines={2} style={{ marginTop: 4 }}>
                                     {verse.text}
                                 </AppText>
-                            </Card>
+                            </View>
                         ))
                     )
                 ) : (
                     reflections.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <Ionicons name="create-outline" size={48} color={Colors.textSecondary} />
-                            <AppText variant="body" color={Colors.textSecondary} align="center" style={{ marginTop: Spacing.md }}>
-                                No reflections yet.{'\n'}Write your thoughts after reading each verse.
+                            <Ionicons name="create-outline" size={36} color={Colors.textSecondary} />
+                            <AppText variant="body" color={Colors.textSecondary} align="center" style={{ marginTop: 12 }}>
+                                No reflections yet
                             </AppText>
                         </View>
                     ) : (
-                        reflections.slice().reverse().map((ref, index) => (
-                            <Card key={index} padding="lg" style={styles.contentCard}>
+                        reflections.slice().reverse().map((ref, i) => (
+                            <View key={i} style={styles.listItem}>
                                 <AppText variant="caption" color={Colors.textSecondary}>
                                     {new Date(ref.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </AppText>
-                                <AppText variant="body" style={styles.reflectionText}>
+                                <AppText variant="body" style={{ marginTop: 4 }}>
                                     {ref.content}
                                 </AppText>
-                            </Card>
+                            </View>
                         ))
                     )
                 )}
 
-                {/* Account Actions */}
+                {/* Account */}
                 <View style={styles.accountSection}>
                     {session ? (
-                        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                            <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+                        <TouchableOpacity style={styles.accountBtn} onPress={handleSignOut}>
+                            <Ionicons name="log-out-outline" size={18} color={Colors.error} />
                             <AppText variant="body" color={Colors.error} style={{ marginLeft: 8 }}>Sign Out</AppText>
                         </TouchableOpacity>
                     ) : (
                         <TouchableOpacity
-                            style={styles.signInButton}
+                            style={[styles.accountBtn, styles.signInBtn]}
                             onPress={() => router.push('/(auth)/landing')}
                         >
-                            <Ionicons name="log-in-outline" size={20} color={Colors.primary} />
+                            <Ionicons name="log-in-outline" size={18} color={Colors.primary} />
                             <AppText variant="body" color={Colors.primary} style={{ marginLeft: 8 }}>
-                                Sign In to Sync Progress
+                                Sign In
                             </AppText>
                         </TouchableOpacity>
                     )}
@@ -248,13 +255,12 @@ const styles = StyleSheet.create({
     profileHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: Spacing.md,
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.lg,
     },
-    avatarContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
+    avatar: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         backgroundColor: '#E8F0E8',
         justifyContent: 'center',
         alignItems: 'center',
@@ -266,98 +272,98 @@ const styles = StyleSheet.create({
     nameRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.sm,
+        gap: 8,
     },
-    premiumBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    proBadge: {
         backgroundColor: Colors.accent,
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: 4,
-        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 10,
     },
     statsRow: {
         flexDirection: 'row',
-        gap: Spacing.md,
-        marginBottom: Spacing.xl,
-    },
-    statCard: {
-        flex: 1,
         backgroundColor: Colors.surface,
         borderRadius: 16,
         padding: Spacing.md,
+        marginBottom: Spacing.lg,
+        borderWidth: 1,
+        borderColor: '#F0EDE8',
+    },
+    statItem: {
+        flex: 1,
         alignItems: 'center',
     },
-    statNumber: {
-        marginVertical: 4,
+    statNum: {
+        marginBottom: 2,
     },
-    upgradeCard: {
+    statDivider: {
+        width: 1,
+        backgroundColor: '#E8E5E0',
+    },
+    premiumCard: {
         backgroundColor: Colors.primary,
         borderRadius: 16,
-        padding: Spacing.lg,
-        marginBottom: Spacing.xl,
-    },
-    upgradeContent: {
+        padding: Spacing.md,
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: Spacing.lg,
     },
-    upgradeText: {
-        opacity: 0.9,
-        marginTop: 4,
+    premiumContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
     },
-    upgradeButton: {
+    premiumText: {
+        marginLeft: Spacing.sm,
+    },
+    premiumBtn: {
         backgroundColor: '#FFF',
         paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        borderRadius: 20,
+        paddingVertical: 8,
+        borderRadius: 16,
     },
-    tabContainer: {
+    tabs: {
         flexDirection: 'row',
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.border,
-        marginBottom: Spacing.lg,
+        marginBottom: Spacing.md,
+        gap: Spacing.sm,
     },
     tab: {
         flex: 1,
-        paddingVertical: Spacing.md,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: Spacing.sm,
+        borderRadius: 12,
+        backgroundColor: Colors.surface,
     },
     tabActive: {
-        borderBottomWidth: 2,
-        borderBottomColor: Colors.primary,
+        backgroundColor: '#E8F0E8',
     },
     emptyState: {
         alignItems: 'center',
-        paddingVertical: Spacing.xxl,
+        paddingVertical: Spacing.xl,
     },
-    contentCard: {
-        marginBottom: Spacing.md,
-    },
-    verseText: {
-        marginTop: Spacing.sm,
-        lineHeight: 22,
-        fontStyle: 'italic',
-    },
-    reflectionText: {
-        marginTop: Spacing.sm,
-        lineHeight: 22,
+    listItem: {
+        backgroundColor: Colors.surface,
+        borderRadius: 14,
+        padding: Spacing.md,
+        marginBottom: Spacing.sm,
+        borderWidth: 1,
+        borderColor: '#F0EDE8',
     },
     accountSection: {
         marginTop: Spacing.xl,
         alignItems: 'center',
     },
-    signOutButton: {
+    accountBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: Spacing.md,
+        paddingVertical: Spacing.sm,
     },
-    signInButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    signInBtn: {
         backgroundColor: '#E8F0E8',
-        paddingHorizontal: Spacing.xl,
-        paddingVertical: Spacing.md,
-        borderRadius: 30,
+        paddingHorizontal: Spacing.lg,
+        borderRadius: 20,
     },
 });

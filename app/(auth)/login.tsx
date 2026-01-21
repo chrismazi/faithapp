@@ -1,10 +1,8 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppText } from '../../components/common/AppText';
-import { Card } from '../../components/common/Card';
 import { Colors, Spacing } from '../../constants/theme';
 import { AuthService } from '../../services/auth';
 
@@ -16,7 +14,7 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            alert('Please enter both email and password.');
+            alert('Please enter email and password.');
             return;
         }
         setLoading(true);
@@ -28,7 +26,7 @@ export default function LoginScreen() {
                 router.replace('/(tabs)');
             }
         } catch (err) {
-            alert('An unexpected error occurred. Please try again.');
+            alert('An error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -40,23 +38,25 @@ export default function LoginScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={Colors.text} />
+                <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                        <Ionicons name="arrow-back" size={22} color={Colors.text} />
                     </TouchableOpacity>
 
-                    <AppText variant="h1" style={styles.title}>Welcome Back</AppText>
-                    <AppText variant="body" color={Colors.textSecondary} style={styles.subtitle}>
-                        Sign in to continue your journey.
-                    </AppText>
+                    <View style={styles.header}>
+                        <AppText variant="h1">Welcome back</AppText>
+                        <AppText variant="body" color={Colors.textSecondary} style={{ marginTop: 4 }}>
+                            Sign in to continue
+                        </AppText>
+                    </View>
 
-                    <Card padding="lg" style={styles.card}>
-                        <View style={styles.inputContainer}>
-                            <AppText variant="caption" color={Colors.textSecondary} style={styles.label}>Email Address</AppText>
+                    <View style={styles.form}>
+                        <View style={styles.inputGroup}>
+                            <AppText variant="caption" color={Colors.textSecondary}>Email</AppText>
                             <TextInput
                                 style={styles.input}
-                                placeholder="email@example.com"
-                                placeholderTextColor={Colors.textSecondary}
+                                placeholder="you@example.com"
+                                placeholderTextColor="#AAA"
                                 value={email}
                                 onChangeText={setEmail}
                                 autoCapitalize="none"
@@ -64,35 +64,40 @@ export default function LoginScreen() {
                             />
                         </View>
 
-                        <View style={styles.inputContainer}>
-                            <AppText variant="caption" color={Colors.textSecondary} style={styles.label}>Password</AppText>
+                        <View style={styles.inputGroup}>
+                            <AppText variant="caption" color={Colors.textSecondary}>Password</AppText>
                             <TextInput
                                 style={styles.input}
-                                placeholder="********"
-                                placeholderTextColor={Colors.textSecondary}
+                                placeholder="••••••••"
+                                placeholderTextColor="#AAA"
                                 value={password}
                                 onChangeText={setPassword}
                                 secureTextEntry
                             />
                         </View>
 
-                        <TouchableOpacity style={styles.forgotPassword}>
-                            <AppText variant="caption" color={Colors.primary}>Forgot Password?</AppText>
+                        <TouchableOpacity style={styles.forgotBtn}>
+                            <AppText variant="caption" color={Colors.primary}>Forgot password?</AppText>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.button, { backgroundColor: Colors.primary }, loading && { opacity: 0.6 }]}
+                            style={[styles.submitBtn, loading && { opacity: 0.6 }]}
                             onPress={handleLogin}
                             disabled={loading}
+                            activeOpacity={0.8}
                         >
-                            <AppText color="#FFF" align="center">{loading ? 'Signing In...' : 'Sign In'}</AppText>
+                            {loading ? (
+                                <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                                <AppText variant="body" color="#FFF" style={{ fontWeight: '600' }}>Sign In</AppText>
+                            )}
                         </TouchableOpacity>
-                    </Card>
+                    </View>
 
                     <View style={styles.footer}>
-                        <AppText variant="body" color={Colors.textSecondary}>Don't have an account? </AppText>
+                        <AppText variant="caption" color={Colors.textSecondary}>Don't have an account? </AppText>
                         <TouchableOpacity onPress={() => router.push('/signup')}>
-                            <AppText variant="body" color={Colors.primary} style={{ fontWeight: 'bold' }}>Sign Up</AppText>
+                            <AppText variant="caption" color={Colors.primary} style={{ fontWeight: '600' }}>Sign Up</AppText>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -107,45 +112,43 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.background,
     },
     scrollContent: {
-        padding: Spacing.xl,
+        padding: Spacing.lg,
+        paddingBottom: Spacing.xxl,
     },
-    backButton: {
+    backBtn: {
+        marginBottom: Spacing.lg,
+        padding: 4,
+        alignSelf: 'flex-start',
+    },
+    header: {
         marginBottom: Spacing.xl,
-        padding: Spacing.xs,
     },
-    title: {
-        marginBottom: Spacing.xs,
+    form: {
+        gap: Spacing.md,
     },
-    subtitle: {
-        marginBottom: Spacing.xxl,
-    },
-    card: {
-        gap: Spacing.lg,
-    },
-    inputContainer: {
-        gap: Spacing.xs,
-    },
-    label: {
-        marginLeft: 4,
+    inputGroup: {
+        gap: 6,
     },
     input: {
-        backgroundColor: '#F3F4F1',
+        backgroundColor: '#F5F5F3',
         borderRadius: 12,
         padding: Spacing.md,
-        fontSize: 16,
+        fontSize: 14,
         color: Colors.text,
     },
-    forgotPassword: {
+    forgotBtn: {
         alignSelf: 'flex-end',
     },
-    button: {
+    submitBtn: {
+        backgroundColor: Colors.primary,
         paddingVertical: Spacing.md,
-        borderRadius: 30,
+        borderRadius: 24,
+        alignItems: 'center',
         marginTop: Spacing.sm,
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: Spacing.xxl,
+        marginTop: Spacing.xl,
     },
 });

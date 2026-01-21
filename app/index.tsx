@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
@@ -8,7 +7,7 @@ import { Colors } from '../constants/theme';
 
 export default function SplashScreen() {
     const router = useRouter();
-    const logoScale = useRef(new Animated.Value(0)).current;
+    const logoScale = useRef(new Animated.Value(0.8)).current;
     const logoOpacity = useRef(new Animated.Value(0)).current;
     const textOpacity = useRef(new Animated.Value(0)).current;
 
@@ -17,25 +16,25 @@ export default function SplashScreen() {
             Animated.parallel([
                 Animated.spring(logoScale, {
                     toValue: 1,
-                    tension: 10,
-                    friction: 2,
+                    tension: 20,
+                    friction: 4,
                     useNativeDriver: true,
                 }),
                 Animated.timing(logoOpacity, {
                     toValue: 1,
-                    duration: 1000,
+                    duration: 600,
                     useNativeDriver: true,
                 }),
             ]),
             Animated.timing(textOpacity, {
                 toValue: 1,
-                duration: 800,
+                duration: 400,
                 useNativeDriver: true,
             }),
         ]).start(() => {
             setTimeout(() => {
                 router.replace('/onboarding');
-            }, 1000);
+            }, 800);
         });
     }, [router, logoScale, logoOpacity, textOpacity]);
 
@@ -45,11 +44,15 @@ export default function SplashScreen() {
                 styles.logoContainer,
                 { transform: [{ scale: logoScale }], opacity: logoOpacity }
             ]}>
-                <Ionicons name="leaf" size={100} color={Colors.primary} />
+                <View style={styles.logoCircle}>
+                    <Ionicons name="leaf" size={48} color={Colors.primary} />
+                </View>
             </Animated.View>
             <Animated.View style={{ opacity: textOpacity }}>
-                <AppText variant="h1" color={Colors.primary} style={styles.title}>Faith App</AppText>
-                <AppText variant="body" color={Colors.textSecondary} align="center">Understand. Apply. Grow.</AppText>
+                <AppText variant="h1" color={Colors.primary} style={styles.title}>Faith</AppText>
+                <AppText variant="caption" color={Colors.textSecondary} align="center">
+                    Understand. Apply. Grow.
+                </AppText>
             </Animated.View>
         </View>
     );
@@ -63,11 +66,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logoContainer: {
-        marginBottom: 20,
+        marginBottom: 16,
+    },
+    logoCircle: {
+        width: 88,
+        height: 88,
+        borderRadius: 44,
+        backgroundColor: '#E8F0E8',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     title: {
-        fontSize: 40,
-        letterSpacing: 2,
-        marginBottom: 8,
+        fontSize: 28,
+        letterSpacing: 1,
+        marginBottom: 4,
+        textAlign: 'center',
     },
 });

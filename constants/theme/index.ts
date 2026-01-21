@@ -31,33 +31,33 @@ export const Colors = {
 export const Spacing = {
   xs: 4,
   sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
+  md: 12,
+  lg: 20,
+  xl: 28,
+  xxl: 40,
 };
 
 export const Typography = {
   h1: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700' as const,
-    lineHeight: 36,
-    letterSpacing: -0.5,
+    lineHeight: 28,
+    letterSpacing: -0.3,
   },
   h2: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '600' as const,
-    lineHeight: 28,
+    lineHeight: 22,
   },
   body: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '400' as const,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   caption: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500' as const,
-    lineHeight: 18,
+    lineHeight: 16,
   },
 };
 
@@ -65,14 +65,14 @@ export const Shadows = {
   soft: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
   },
   medium: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 4,
   },

@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -12,37 +11,39 @@ export default function AuthLandingScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-                <View style={styles.logoContainer}>
-                    <Ionicons name="leaf" size={80} color={Colors.primary} />
-                    <AppText variant="h1" color={Colors.primary} style={styles.logoText}>Faith App</AppText>
+                {/* Logo */}
+                <View style={styles.logoSection}>
+                    <View style={styles.logoCircle}>
+                        <Ionicons name="leaf" size={40} color={Colors.primary} />
+                    </View>
+                    <AppText variant="h1" color={Colors.primary} style={styles.logoText}>Faith</AppText>
                 </View>
 
-                <View style={styles.bottomSection}>
-                    <AppText variant="h2" align="center" style={styles.welcomeText}>
-                        Ready to deepen your faith?
-                    </AppText>
+                {/* CTA */}
+                <View style={styles.ctaSection}>
+                    <AppText variant="h2" align="center">Ready to begin?</AppText>
                     <AppText variant="body" align="center" color={Colors.textSecondary} style={styles.subtitle}>
-                        Join thousands of young adults growing in the Word.
+                        Create an account to sync your progress.
                     </AppText>
 
                     <TouchableOpacity
-                        style={[styles.button, { backgroundColor: Colors.primary }]}
+                        style={styles.primaryBtn}
                         onPress={() => router.push('/signup')}
+                        activeOpacity={0.8}
                     >
-                        <AppText color="#FFF" align="center">Create Account</AppText>
+                        <AppText variant="body" color="#FFF" style={{ fontWeight: '600' }}>Create Account</AppText>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.button, styles.secondaryButton]}
+                        style={styles.secondaryBtn}
                         onPress={() => router.push('/login')}
+                        activeOpacity={0.8}
                     >
-                        <AppText align="center">Sign In</AppText>
+                        <AppText variant="body">Sign In</AppText>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.guestButton} onPress={() => router.replace('/(tabs)')}>
-                        <AppText variant="caption" color={Colors.textSecondary} align="center">
-                            Continue as Guest
-                        </AppText>
+                    <TouchableOpacity style={styles.guestBtn} onPress={() => router.replace('/(tabs)')}>
+                        <AppText variant="caption" color={Colors.textSecondary}>Continue as Guest</AppText>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -60,36 +61,48 @@ const styles = StyleSheet.create({
         padding: Spacing.xl,
         justifyContent: 'space-between',
     },
-    logoContainer: {
+    logoSection: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    logoCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#E8F0E8',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
     logoText: {
-        fontSize: 32,
-        marginTop: 10,
+        fontSize: 24,
         letterSpacing: 1,
     },
-    bottomSection: {
-        marginBottom: Spacing.xl,
-    },
-    welcomeText: {
-        marginBottom: Spacing.sm,
+    ctaSection: {
+        paddingBottom: Spacing.lg,
     },
     subtitle: {
-        marginBottom: Spacing.xxl,
-        lineHeight: 22,
+        marginTop: 8,
+        marginBottom: Spacing.xl,
     },
-    button: {
+    primaryBtn: {
+        backgroundColor: Colors.primary,
         paddingVertical: Spacing.md,
-        borderRadius: 30,
-        marginBottom: Spacing.md,
+        borderRadius: 24,
+        alignItems: 'center',
+        marginBottom: Spacing.sm,
     },
-    secondaryButton: {
+    secondaryBtn: {
         borderWidth: 1,
         borderColor: Colors.border,
+        paddingVertical: Spacing.md,
+        borderRadius: 24,
+        alignItems: 'center',
+        marginBottom: Spacing.md,
     },
-    guestButton: {
-        marginTop: Spacing.sm,
+    guestBtn: {
+        alignItems: 'center',
+        paddingVertical: 8,
     },
 });

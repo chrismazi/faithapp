@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { AppText } from '../../components/common/AppText';
-import { Card } from '../../components/common/Card';
 import { Colors, Spacing } from '../../constants/theme';
 import { DailyContent, getTodayVerse } from '../../services/content';
 import { StorageService } from '../../services/storage';
@@ -23,7 +22,7 @@ export default function ReflectionScreen() {
                 const premium = await StorageService.isPremium();
                 setIsPremium(premium);
             } catch (error) {
-                console.error('Error loading reflection:', error);
+                console.error('Error loading:', error);
             } finally {
                 setLoading(false);
             }
@@ -33,7 +32,6 @@ export default function ReflectionScreen() {
 
     const handleSave = async () => {
         if (!reflection.trim() || !todayVerse) return;
-
         setIsSaving(true);
         try {
             await StorageService.saveReflection({
@@ -43,9 +41,9 @@ export default function ReflectionScreen() {
             });
             setShowSuccess(true);
             setReflection('');
-            setTimeout(() => setShowSuccess(false), 3000);
+            setTimeout(() => setShowSuccess(false), 2500);
         } catch (error) {
-            alert('Failed to save reflection. Please try again.');
+            alert('Failed to save.');
         } finally {
             setIsSaving(false);
         }
@@ -74,75 +72,77 @@ export default function ReflectionScreen() {
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <AppText variant="caption" color={Colors.textSecondary}>{todayVerse.reference}</AppText>
-                        <AppText variant="h2">Understanding Today's Verse</AppText>
+                        <AppText variant="caption" color={Colors.primary}>{todayVerse.reference}</AppText>
+                        <AppText variant="h1">Study & Reflect</AppText>
                     </View>
 
-                    {/* Scripture Reminder */}
-                    <Card padding="lg" style={styles.verseReminder}>
-                        <AppText variant="body" style={styles.verseText} align="center">
+                    {/* Scripture Quote */}
+                    <View style={styles.quoteCard}>
+                        <View style={styles.quoteMark}>
+                            <AppText style={{ fontSize: 28, color: Colors.primary, opacity: 0.3 }}>"</AppText>
+                        </View>
+                        <AppText variant="body" style={styles.quoteText}>
                             {todayVerse.text}
                         </AppText>
-                    </Card>
+                    </View>
 
-                    {/* Plain English Explanation */}
+                    {/* Explanation Section */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
-                            <Ionicons name="book-outline" size={20} color={Colors.primary} />
-                            <AppText variant="h2" style={styles.sectionTitle}>In Plain English</AppText>
+                            <View style={styles.sectionIcon}>
+                                <Ionicons name="book-outline" size={16} color={Colors.primary} />
+                            </View>
+                            <AppText variant="body" style={styles.sectionTitle}>Plain English</AppText>
                         </View>
-                        <AppText variant="body" style={styles.explanationText}>
+                        <AppText variant="body" style={styles.bodyText}>
                             {todayVerse.plainExplanation}
                         </AppText>
                     </View>
 
-                    {/* AI Insight (Premium) */}
+                    {/* AI Insight */}
                     {isPremium ? (
-                        <Card padding="lg" style={styles.aiCard}>
+                        <View style={styles.aiCard}>
                             <View style={styles.aiHeader}>
-                                <Ionicons name="sparkles" size={20} color={Colors.accent} />
-                                <AppText variant="body" color={Colors.accent} style={styles.aiTitle}>
+                                <Ionicons name="sparkles" size={14} color={Colors.accent} />
+                                <AppText variant="caption" color={Colors.accent} style={{ marginLeft: 6, fontWeight: '600' }}>
                                     Deeper Insight
                                 </AppText>
                             </View>
                             <AppText variant="body" style={styles.aiText}>
                                 {todayVerse.aiInsight}
                             </AppText>
-                        </Card>
+                        </View>
                     ) : (
-                        <TouchableOpacity style={styles.lockedCard}>
-                            <View style={styles.lockedContent}>
-                                <Ionicons name="lock-closed" size={24} color={Colors.textSecondary} />
-                                <View style={{ marginLeft: Spacing.md, flex: 1 }}>
-                                    <AppText variant="body" style={{ fontWeight: '600' }}>Deeper Insight</AppText>
-                                    <AppText variant="caption" color={Colors.textSecondary}>
-                                        Unlock historical context and original language insights with Premium
-                                    </AppText>
-                                </View>
-                                <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+                        <TouchableOpacity style={styles.lockedCard} activeOpacity={0.8}>
+                            <Ionicons name="lock-closed" size={18} color={Colors.textSecondary} />
+                            <View style={styles.lockedText}>
+                                <AppText variant="body" style={{ fontWeight: '600' }}>Unlock Deeper Insights</AppText>
+                                <AppText variant="caption" color={Colors.textSecondary}>
+                                    Historical context & original language
+                                </AppText>
                             </View>
+                            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
                         </TouchableOpacity>
                     )}
 
                     {/* Reflection Question */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
-                            <Ionicons name="help-circle-outline" size={20} color={Colors.primary} />
-                            <AppText variant="h2" style={styles.sectionTitle}>Reflect</AppText>
+                            <View style={[styles.sectionIcon, { backgroundColor: '#F5EDE8' }]}>
+                                <Ionicons name="help-circle-outline" size={16} color={Colors.accent} />
+                            </View>
+                            <AppText variant="body" style={styles.sectionTitle}>Reflect</AppText>
                         </View>
                         <AppText variant="body" style={styles.questionText}>
                             {todayVerse.reflectionQuestion}
                         </AppText>
                     </View>
 
-                    {/* Reflection Input */}
-                    <View style={styles.inputSection}>
-                        <AppText variant="caption" color={Colors.textSecondary} style={{ marginBottom: Spacing.sm }}>
-                            Your thoughts (private)
-                        </AppText>
+                    {/* Input */}
+                    <View style={styles.inputWrapper}>
                         <TextInput
                             style={styles.input}
-                            placeholder="Write what's on your heart..."
+                            placeholder="Write your thoughts..."
                             placeholderTextColor={Colors.textSecondary}
                             multiline
                             value={reflection}
@@ -151,29 +151,25 @@ export default function ReflectionScreen() {
                         />
                     </View>
 
-                    {/* Success Message */}
+                    {/* Success */}
                     {showSuccess && (
-                        <View style={styles.successMessage}>
-                            <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                            <AppText variant="body" color="#4CAF50" style={{ marginLeft: 8 }}>
-                                Reflection saved!
-                            </AppText>
+                        <View style={styles.successMsg}>
+                            <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                            <AppText variant="caption" color="#4CAF50" style={{ marginLeft: 6 }}>Saved!</AppText>
                         </View>
                     )}
 
                     {/* Save Button */}
                     <TouchableOpacity
-                        style={[styles.saveButton, (!reflection.trim() || isSaving) && styles.buttonDisabled]}
+                        style={[styles.saveBtn, (!reflection.trim() || isSaving) && styles.saveBtnDisabled]}
                         onPress={handleSave}
                         disabled={!reflection.trim() || isSaving}
+                        activeOpacity={0.8}
                     >
                         {isSaving ? (
                             <ActivityIndicator size="small" color="#FFF" />
                         ) : (
-                            <>
-                                <Ionicons name="bookmark-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-                                <AppText variant="body" color="#FFF">Save Reflection</AppText>
-                            </>
+                            <AppText variant="body" color="#FFF" style={{ fontWeight: '600' }}>Save Reflection</AppText>
                         )}
                     </TouchableOpacity>
                 </ScrollView>
@@ -198,96 +194,109 @@ const styles = StyleSheet.create({
     },
     header: {
         marginBottom: Spacing.lg,
-        marginTop: Spacing.md,
     },
-    verseReminder: {
+    quoteCard: {
         backgroundColor: '#F8F6F3',
-        marginBottom: Spacing.xl,
+        borderRadius: 16,
+        padding: Spacing.lg,
+        marginBottom: Spacing.lg,
+        position: 'relative',
     },
-    verseText: {
+    quoteMark: {
+        position: 'absolute',
+        top: 8,
+        left: 12,
+    },
+    quoteText: {
         fontStyle: 'italic',
-        lineHeight: 24,
-        color: Colors.text,
+        lineHeight: 22,
+        paddingTop: 16,
     },
     section: {
-        marginBottom: Spacing.xl,
+        marginBottom: Spacing.lg,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.sm,
+    },
+    sectionIcon: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        backgroundColor: '#E8F0E8',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 8,
     },
     sectionTitle: {
-        marginLeft: Spacing.sm,
-        fontSize: 18,
+        fontWeight: '600',
     },
-    explanationText: {
-        lineHeight: 26,
+    bodyText: {
+        lineHeight: 22,
         color: Colors.text,
     },
     aiCard: {
         backgroundColor: '#FDF8F3',
+        borderRadius: 14,
+        padding: Spacing.md,
+        marginBottom: Spacing.lg,
         borderWidth: 1,
         borderColor: '#F0E5D8',
-        marginBottom: Spacing.xl,
     },
     aiHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.sm,
-    },
-    aiTitle: {
-        marginLeft: 8,
-        fontWeight: '600',
+        marginBottom: 8,
     },
     aiText: {
-        lineHeight: 24,
+        lineHeight: 20,
         fontStyle: 'italic',
+        fontSize: 13,
     },
     lockedCard: {
-        backgroundColor: '#F5F5F5',
-        borderRadius: 16,
-        padding: Spacing.lg,
-        marginBottom: Spacing.xl,
-    },
-    lockedContent: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#F5F5F3',
+        borderRadius: 14,
+        padding: Spacing.md,
+        marginBottom: Spacing.lg,
+    },
+    lockedText: {
+        flex: 1,
+        marginLeft: Spacing.sm,
     },
     questionText: {
-        lineHeight: 26,
+        lineHeight: 22,
         fontWeight: '500',
-        color: Colors.text,
     },
-    inputSection: {
-        marginBottom: Spacing.lg,
+    inputWrapper: {
+        marginBottom: Spacing.md,
     },
     input: {
         backgroundColor: '#F8F8F6',
-        borderRadius: 16,
-        padding: Spacing.lg,
-        minHeight: 140,
-        fontSize: 16,
-        lineHeight: 24,
+        borderRadius: 14,
+        padding: Spacing.md,
+        minHeight: 100,
+        fontSize: 14,
+        lineHeight: 20,
         color: Colors.text,
         borderWidth: 1,
-        borderColor: '#E8E8E6',
+        borderColor: '#EAEAE8',
     },
-    successMessage: {
+    successMsg: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.sm,
     },
-    saveButton: {
+    saveBtn: {
         backgroundColor: Colors.primary,
-        borderRadius: 30,
+        borderRadius: 24,
         paddingVertical: Spacing.md,
-        flexDirection: 'row',
-        justifyContent: 'center',
         alignItems: 'center',
     },
-    buttonDisabled: {
+    saveBtnDisabled: {
         opacity: 0.5,
     },
 });
